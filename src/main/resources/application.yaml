@@ -1,0 +1,7 @@
+server:
+  port: 9999
+spring:
+  redis:
+    password: 123456
+  session:
+    store-type: redis
