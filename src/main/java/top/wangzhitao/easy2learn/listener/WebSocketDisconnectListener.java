@@ -2,17 +2,30 @@ package top.wangzhitao.easy2learn.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import top.wangzhitao.easy2learn.cache.ChatSessionCache;
+import top.wangzhitao.easy2learn.constant.ChatConstant;
+import top.wangzhitao.easy2learn.service.ChatService;
+
+import javax.annotation.Resource;
 
 @Component
 @Slf4j
 public class WebSocketDisconnectListener implements ApplicationListener<SessionDisconnectEvent> {
 
+    @Resource
+    private RedisTemplate<String,String> redisTemplate;
+
+    @Resource
+    private ChatService chatService;
     @Override
     public void onApplicationEvent(SessionDisconnectEvent event) {
-        log.info(String.valueOf(event.getTimestamp()));
         // 在这里处理连接关闭事件
-        System.out.println("WebSocket连接已关闭：" + event.getMessage());
+        String sessionId = event.getSessionId();
+        redisTemplate.delete(ChatConstant.CHAT_SESSION + sessionId);
+        ChatSessionCache.userSessionMap.remove(sessionId);
+        chatService.onlineUser();
     }
 }

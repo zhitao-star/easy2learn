@@ -1,16 +1,12 @@
 package top.wangzhitao.easy2learn.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import top.wangzhitao.easy2learn.interceptor.LoggingChannelInterceptor;
-import top.wangzhitao.easy2learn.listener.WebSocketConnectListener;
-import top.wangzhitao.easy2learn.listener.WebSocketDisconnectListener;
 
 import javax.annotation.Resource;
 
@@ -23,8 +19,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic"); // 配置消息代理，用于向客户端发送消息
+        config.enableSimpleBroker("/topic","/queue","/online"); // 配置消息代理，用于向客户端发送消息
         config.setApplicationDestinationPrefixes("/app"); // 客户端发送消息的前缀
+        config.setUserDestinationPrefix("/user"); // 设置用户目标的前缀
     }
 
     @Override
