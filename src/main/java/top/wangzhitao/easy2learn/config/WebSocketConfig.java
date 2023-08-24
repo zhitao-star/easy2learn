@@ -21,7 +21,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic","/queue","/online"); // 配置消息代理，用于向客户端发送消息
         config.setApplicationDestinationPrefixes("/app"); // 客户端发送消息的前缀
-        config.setUserDestinationPrefix("/user"); // 设置用户目标的前缀
     }
 
     @Override

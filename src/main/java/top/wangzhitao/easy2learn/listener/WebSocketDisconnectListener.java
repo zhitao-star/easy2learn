@@ -5,7 +5,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import top.wangzhitao.easy2learn.cache.ChatSessionCache;
 import top.wangzhitao.easy2learn.constant.ChatConstant;
 import top.wangzhitao.easy2learn.service.ChatService;
 
@@ -24,8 +23,10 @@ public class WebSocketDisconnectListener implements ApplicationListener<SessionD
     public void onApplicationEvent(SessionDisconnectEvent event) {
         // 在这里处理连接关闭事件
         String sessionId = event.getSessionId();
+        //是断开
+        chatService.offlineUser(sessionId);
+        //删除会话
         redisTemplate.delete(ChatConstant.CHAT_SESSION + sessionId);
-        ChatSessionCache.userSessionMap.remove(sessionId);
-        chatService.onlineUser();
+
     }
 }

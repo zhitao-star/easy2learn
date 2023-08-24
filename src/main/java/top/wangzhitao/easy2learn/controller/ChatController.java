@@ -11,7 +11,7 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Controller;
-import top.wangzhitao.easy2learn.cache.ChatSessionCache;
+import top.wangzhitao.easy2learn.constant.ChatConstant;
 import top.wangzhitao.easy2learn.service.ChatService;
 import top.wangzhitao.easy2learn.vo.ChatMessage;
 
@@ -22,44 +22,35 @@ import javax.annotation.Resource;
 public class ChatController {
 
     @Resource
-    private RedisTemplate<String,String> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     @Resource
-    private  SimpMessagingTemplate simpMessagingTemplate;
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Resource
     private ChatService chatService;
 
 
-
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessage chatMessage) {
-        String sender = chatMessage.getSender();
         //得到消息接收者userID
-        String receiver = chatMessage.getReceiver();
-        String receiverSessionId = redisTemplate.opsForValue().get(receiver);
-        String messageContent = chatMessage.getContent();
+        String receiverInfo = redisTemplate.opsForValue().get(ChatConstant.CHAT_SESSION + chatMessage.getReceiver());
+        ChatMessage receiverMessage = JSON.parseObject(receiverInfo, ChatMessage.class);
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
-        headerAccessor.setSessionId(receiverSessionId);
-        String userDestination = "/queue/destination/" + receiver;
+        String userDestination = "/online/receiveMessage/" + receiverMessage.getUserId();
         byte[] messageBytes = JSON.toJSONBytes(chatMessage); // You might need to specify a character encoding here
-        Message<byte[]> msg  = new GenericMessage<>(messageBytes, headerAccessor.getMessageHeaders());
+        Message<byte[]> msg = new GenericMessage<>(messageBytes, headerAccessor.getMessageHeaders());
         simpMessagingTemplate.send(userDestination, msg);
 
     }
 
-    @MessageMapping("/chat.addUser")
+    @MessageMapping("/chat.onlineOrOfflineUser")
     public void addUser(@Payload ChatMessage chatMessage,
-                               SimpMessageHeaderAccessor headerAccessor) {
+                          SimpMessageHeaderAccessor headerAccessor) {
         //得到sessionID 存到redis里
         String sessionId = headerAccessor.getSessionId();
-        redisTemplate.opsForValue().set("session:" + sessionId.trim(),headerAccessor.getSessionAttributes().toString());
-        //将userID和会话id关联
-        String userId = chatMessage.getSender();
-        redisTemplate.opsForValue().set(userId,sessionId);
-        //加入本地缓存中
-        ChatSessionCache.userSessionMap.put(sessionId,userId);
+        chatMessage.setSessionId(sessionId);
         //通知在线用户
-        chatService.onlineUser();
+        chatService.onlineUser(chatMessage);
     }
 }
