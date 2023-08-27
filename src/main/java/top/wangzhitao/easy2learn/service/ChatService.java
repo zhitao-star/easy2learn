@@ -7,4 +7,8 @@ public interface ChatService {
 
     void offlineUser(String sessionId);
 
+    void sendMessage(String destination, String message);
+
+    void getAllOnlineUser();
+
 }
